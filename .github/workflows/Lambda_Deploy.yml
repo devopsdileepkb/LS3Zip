@@ -1,0 +1,56 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - main   # Run automatically on pushes to main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (dev, sit, ppt, prd)'
+        required: true
+        default: 'dev'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+      # 3. Configure AWS credentials (stored in GitHub Secrets)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1   # Matches your dev.tfvars region
+
+      # 4. Initialize Terraform
+      - name: Terraform Init
+        working-directory: ./iac
+        run: terraform init
+
+      # 5. Validate Terraform
+      - name: Terraform Validate
+        working-directory: ./iac
+        run: terraform validate
+
+      # 6. Plan Terraform
+      - name: Terraform Plan
+        working-directory: ./iac
+        run: terraform plan -var-file="environment/${{ github.event.inputs.environment }}.tfvars"
+
+      # 7. Apply Terraform (auto-approve for CI/CD)
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./iac
+        run: terraform apply -var-file="environment/${{ github.event.inputs.environment }}.tfvars" -auto-approve
