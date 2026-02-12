@@ -22,12 +22,22 @@ def handler(event, context):
     files, keys = loadfiles(bucket_name, folder_prefix)
     if not files:
         return {"statusCode": 200, "body": "No CSV files found."}
+    
     zip_path = create_zip(files)
     upload_zip(zip_path, bucket_name, folder_prefix + zip_file_name)
-    delete_originals(bucket_name, keys)
+
+    # ✅ Only delete when triggered by EventBridge (scheduled run)
+    if event.get("source") == "aws.events":
+        delete_originals(bucket_name, keys)
+        return {
+            "statusCode": 200,
+            "body": f"Created {zip_file_name} in {bucket_name}/{folder_prefix} and deleted source CSVs (daily run)"
+        }
+
+    # ✅ For S3 trigger, keep the CSVs
     return {
         "statusCode": 200,
-        "body": f"Created {zip_file_name} in {bucket_name}/{folder_prefix} and deleted source CSVs"
+        "body": f"Created {zip_file_name} in {bucket_name}/{folder_prefix} (S3 trigger, CSVs kept)"
     }
 
 def loadfiles(bucket, prefix):
