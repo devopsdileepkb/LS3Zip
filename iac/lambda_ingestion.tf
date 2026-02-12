@@ -23,6 +23,9 @@ resource "aws_lambda_function" "zip_csv_lambda" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda.handler"
   runtime       = "python3.9"
+  timeout       = 60 
+  memory_size   = 512
+
 
   filename      = "${path.module}/../src/lambda/lambda.zip"
 
