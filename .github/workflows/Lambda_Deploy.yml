@@ -38,8 +38,14 @@ jobs:
       - name: Terraform Init
         working-directory: ./iac
         run: terraform init
+        
+      - name: Build Lambda package
+        run: |
+          cd src/lambda
+          zip -r lambda.zip .
 
-      # 5. Validate Terraform
+
+    # 5. Validate Terraform
       - name: Terraform Validate
         working-directory: ./iac
         run: terraform validate
