@@ -41,7 +41,7 @@ resource "aws_lambda_permission" "allow_s3" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.zip_csv_lambda.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.my_bucket.arn
+  source_arn    = "arn:aws:s3:::${var.bucket_name}"
 }
 
 resource "aws_s3_bucket_notification" "bucket_notify" {
@@ -59,6 +59,7 @@ resource "aws_s3_bucket_notification" "bucket_notify" {
     aws_lambda_permission.allow_s3
   ]
 }
+
 
 # EventBridge rule to trigger Lambda daily at 1 AM UTC
 resource "aws_cloudwatch_event_rule" "daily_trigger" {
