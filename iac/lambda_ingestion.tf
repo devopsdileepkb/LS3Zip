@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
 resource "aws_lambda_function" "zip_csv_lambda" {
   function_name = "zip-csv-lambda-${var.environment}"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "main.handler"
+  handler       = "lambda.handler"
   runtime       = "python3.9"
 
   filename      = "${path.module}/../src/lambda/lambda.zip"
