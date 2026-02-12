@@ -1,3 +1,3 @@
-region       = "eu-west-1"
+region       = "us-east-1"
 environment  = "dev"
-bucket_name  = "study-optimiser-dev-bucket"
+bucket_name  = ""dileep821754"
