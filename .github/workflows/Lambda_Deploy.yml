@@ -39,23 +39,29 @@ jobs:
         working-directory: ./iac
         run: terraform init
         
+      # 5. Build Lambda package
       - name: Build Lambda package
         run: |
           cd src/lambda
           zip -r lambda.zip .
 
-
-    # 5. Validate Terraform
+      # 6. Validate Terraform
       - name: Terraform Validate
         working-directory: ./iac
         run: terraform validate
 
-      # 6. Plan Terraform
+      # 7. (Optional) Import existing IAM role if already created
+      #    This prevents "EntityAlreadyExists" errors in CI/CD
+      - name: Terraform Import IAM Role
+        working-directory: ./iac
+        run: terraform import aws_iam_role.lambda_role lambda_zip_csv_role_${{ github.event.inputs.environment }} || true
+
+      # 8. Plan Terraform
       - name: Terraform Plan
         working-directory: ./iac
         run: terraform plan -var-file="environment/${{ github.event.inputs.environment }}.tfvars"
 
-      # 7. Apply Terraform (auto-approve for CI/CD)
+      # 9. Apply Terraform (auto-approve for CI/CD)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: ./iac
