@@ -50,18 +50,12 @@ jobs:
         working-directory: ./iac
         run: terraform validate
 
-      # 7. (Optional) Import existing IAM role if already created
-      #    This prevents "EntityAlreadyExists" errors in CI/CD
-      - name: Terraform Import IAM Role
-        working-directory: ./iac
-        run: terraform import aws_iam_role.lambda_role lambda_zip_csv_role_${{ github.event.inputs.environment }} || true
-
-      # 8. Plan Terraform
+        # 7. Plan Terraform
       - name: Terraform Plan
         working-directory: ./iac
         run: terraform plan -var-file="environment/${{ github.event.inputs.environment }}.tfvars"
 
-      # 9. Apply Terraform (auto-approve for CI/CD)
+      # 8. Apply Terraform (auto-approve for CI/CD)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: ./iac
