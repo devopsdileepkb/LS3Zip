@@ -11,6 +11,9 @@ resource "aws_iam_role" "lambda_role" {
       }
     }]
   })
+   lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_s3_policy" {
@@ -62,7 +65,11 @@ resource "aws_lambda_function" "zip_csv_lambda" {
       BUCKET      = var.bucket_name
     }
   }
+   lifecycle {
+    create_before_destroy = true
+  }
 }
+
 
 # Permission for S3 to invoke Lambda
 resource "aws_lambda_permission" "allow_s3" {
