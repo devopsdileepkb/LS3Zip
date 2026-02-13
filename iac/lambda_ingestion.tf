@@ -12,6 +12,7 @@ resource "aws_iam_role" "lambda_role" {
     }]
   })
 }
+
 resource "aws_iam_role_policy" "lambda_s3_policy" {
   name = "lambda-s3-policy-${var.environment}"
   role = aws_iam_role.lambda_role.id
@@ -30,8 +31,8 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
         Effect = "Allow"
         Action = [
           "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:PutObject"
+          # Removed "s3:DeleteObject" for tighter security
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}/*"
       }
@@ -40,18 +41,17 @@ resource "aws_iam_role_policy" "lambda_s3_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
-  role       = aws_iam_role.lambda_role.name
+  role       = aws_iam_role.lambda_role.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_lambda_function" "zip_csv_lambda" {
-  function_name = "zip-csv-lambda-${var.environment}"
+  function_name = local.lambda_name
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda.handler"
   runtime       = "python3.9"
-  timeout       = 60 
+  timeout       = 60
   memory_size   = 512
-
 
   filename      = "${path.module}/../src/lambda/lambda.zip"
 
@@ -73,6 +73,7 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = "arn:aws:s3:::${var.bucket_name}"
 }
 
+# ⚠️ Note: aws_s3_bucket_notification overwrites all notifications on the bucket.
 resource "aws_s3_bucket_notification" "bucket_notify" {
   bucket = var.bucket_name
 
@@ -89,12 +90,11 @@ resource "aws_s3_bucket_notification" "bucket_notify" {
   ]
 }
 
-
 # EventBridge rule to trigger Lambda daily at 1 AM UTC
 resource "aws_cloudwatch_event_rule" "daily_trigger" {
   name                = "zip-csv-daily-${var.environment}"
   description         = "Triggers Lambda daily at 1 AM UTC"
-  schedule_expression = "cron(0 1 * * ? *)"
+  schedule_expression = local.schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
